@@ -34,12 +34,24 @@ The turn-based design is especially suited to:
 - learners in different time zones
 
 ---
+## ✅ Moodle Compliance
+
+CollabMatch follows Moodle plugin development best practices:
+
+- Uses External Services (no legacy AJAX endpoints)
+- Implements required core events (course_module_viewed)
+- Includes Privacy API provider implementation
+- Supports backup and restore
+- Uses Moodle capability and context checks
+- Uses language strings (get_string) for user-facing text
+
+The plugin is designed to meet Moodle.org plugin review requirements.
 
 ## ⚙️ Features
 
 - Two-player turn-based gameplay
 - Player invitation system (one learner invites another)
-- AJAX polling for near real-time updates
+-- AJAX polling via Moodle External Services for near real-time updates
 - Persistent game state across sessions
 - Integration with Moodle Gradebook
 - Clean separation between activity configuration and gameplay data
@@ -146,13 +158,15 @@ CollabMatch writes to the Moodle gradebook.
 
 ## 🔌 Installation
 
-1. Copy the plugin folder into:
+1. Copy the plugin folder to:
+   mod/collabmatch
+
 2. Log in to Moodle as an administrator
 
 3. Navigate to:
+   Site administration → Notifications
 
 4. Complete the installation process
-
 ---
 
 ## 🧪 Usage
@@ -184,6 +198,13 @@ CollabMatch writes to the Moodle gradebook.
 - Improved onboarding for first-time users
 
 ---
+## 🧩 Compatibility
+
+Tested with:
+- Moodle 5.1+
+- PHP 8.2+
+
+May work with earlier versions but not officially verified.
 
 ## 👨‍🏫 Educational Context
 
