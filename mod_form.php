@@ -9,21 +9,6 @@
 /**
  * Activity settings form for the collabmatch module.
  *
- * Teacher-facing settings include:
- * - activity name
- * - description / instructions
- * - prompt / instruction shown inside the activity
- * - target zones
- * - item-to-zone pairs
- * - standard Moodle grading settings
- *
- * Example pair line:
- *   Springbok|South Africa
- *
- * Meaning:
- *   Item = Springbok
- *   Correct zone = South Africa
- *
  * @package    mod_collabmatch
  * @copyright  2026
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -44,129 +29,117 @@ class mod_collabmatch_mod_form extends moodleform_mod {
     public function definition() {
         $mform = $this->_form;
 
-        /*
-         * -------------------------------------------------------------
-         * General section
-         * -------------------------------------------------------------
-         */
         $mform->addElement('header', 'general', get_string('general', 'form'));
 
         $mform->addElement(
             'text',
             'name',
-            get_string('collabmatchname', 'collabmatch'),
+            get_string('collabmatchname', 'mod_collabmatch'),
             ['size' => '64']
         );
         $mform->setType('name', PARAM_TEXT);
         $mform->addRule('name', null, 'required', null, 'client');
 
-        /*
-         * This adds:
-         * - Description editor
-         * - "Display description on course page"
-         */
         $this->standard_intro_elements();
 
         $mform->addElement(
             'static',
             'descriptionguidance',
             '',
-            'Tip: Put full learner instructions in the Description box above and tick "Display description on course page" if you want learners to see the instructions before opening the activity.'
+            get_string('descriptionguidance', 'mod_collabmatch')
         );
 
-        /*
-         * -------------------------------------------------------------
-         * Collaborative Match content settings
-         * -------------------------------------------------------------
-         */
-        $mform->addElement('header', 'collabmatchcontent', get_string('pluginname', 'collabmatch'));
+        $mform->addElement(
+            'header',
+            'collabmatchcontent',
+            get_string('collabmatchcontent', 'mod_collabmatch')
+        );
 
         $mform->addElement(
             'text',
             'prompttext',
-            get_string('prompttext', 'collabmatch'),
+            get_string('prompttext', 'mod_collabmatch'),
             ['size' => '80']
         );
         $mform->setType('prompttext', PARAM_TEXT);
-        $mform->addHelpButton('prompttext', 'prompttext', 'collabmatch');
-        $mform->setDefault('prompttext', 'Choose the most appropriate collaborative move.');
+        $mform->addHelpButton('prompttext', 'prompttext', 'mod_collabmatch');
+        $mform->setDefault('prompttext', get_string('defaultprompttext', 'mod_collabmatch'));
 
         $mform->addElement(
             'textarea',
             'targetzones',
-            get_string('targetzones', 'collabmatch'),
+            get_string('targetzones', 'mod_collabmatch'),
             ['rows' => 6, 'cols' => 60]
         );
         $mform->setType('targetzones', PARAM_TEXT);
-        $mform->addHelpButton('targetzones', 'targetzones', 'collabmatch');
-        $mform->setDefault(
-            'targetzones',
-            "South Africa\nHabitat\nPainting\nInvention"
-        );
+        $mform->addHelpButton('targetzones', 'targetzones', 'mod_collabmatch');
+        $mform->setDefault('targetzones', "South Africa\nHabitat\nPainting\nInvention");
 
         $mform->addElement(
             'textarea',
             'matchpairs',
-            get_string('matchpairs', 'collabmatch'),
+            get_string('matchpairs', 'mod_collabmatch'),
             ['rows' => 8, 'cols' => 60]
         );
         $mform->setType('matchpairs', PARAM_TEXT);
-        $mform->addHelpButton('matchpairs', 'matchpairs', 'collabmatch');
+        $mform->addHelpButton('matchpairs', 'matchpairs', 'mod_collabmatch');
         $mform->setDefault(
             'matchpairs',
             "Springbok|South Africa\nLion|Habitat\nMona Lisa|Painting\nEdison|Invention"
         );
 
         $mform->addElement(
+            'advcheckbox',
+            'timerenabled',
+            get_string('timerenabled', 'mod_collabmatch'),
+            get_string('timerenabled_desc', 'mod_collabmatch')
+        );
+        $mform->setDefault('timerenabled', 1);
+        $mform->addHelpButton('timerenabled', 'timerenabled', 'mod_collabmatch');
+
+        $mform->addElement(
+            'text',
+            'timeseconds',
+            get_string('timeseconds', 'mod_collabmatch'),
+            ['size' => '8']
+        );
+        $mform->setType('timeseconds', PARAM_INT);
+        $mform->setDefault('timeseconds', 60);
+        $mform->addHelpButton('timeseconds', 'timeseconds', 'mod_collabmatch');
+        $mform->hideIf('timeseconds', 'timerenabled', 'notchecked');
+
+        $mform->addElement(
+            'textarea',
+            'howitworkstext',
+            get_string('howitworkstext', 'mod_collabmatch'),
+            ['rows' => 4, 'cols' => 70]
+        );
+        $mform->setType('howitworkstext', PARAM_TEXT);
+        $mform->addHelpButton('howitworkstext', 'howitworkstext', 'mod_collabmatch');
+        $mform->setDefault('howitworkstext', get_string('defaulthowitworkstext', 'mod_collabmatch'));
+
+        $mform->addElement(
             'static',
             'collabmatchteacherinfo',
             '',
-            get_string('teacherinfotext', 'collabmatch')
+            get_string('teacherinfotext', 'mod_collabmatch')
         );
 
-        /*
-         * -------------------------------------------------------------
-         * Standard Moodle grading section
-         * -------------------------------------------------------------
-         *
-         * This is the key change.
-         * It gives Moodle the official grading controls needed for:
-         * - Maximum grade
-         * - Grade to pass
-         * - Passing grade completion
-         */
         $this->standard_grading_coursemodule_elements();
 
         $mform->addElement(
             'static',
             'gradingguidance',
             '',
-            'Use Moodle’s standard grading controls above. Set the maximum grade there, and if you want completion by pass, set the Grade to pass in the gradebook or grading settings.'
+            get_string('gradingguidance', 'mod_collabmatch')
         );
 
-        /*
-         * -------------------------------------------------------------
-         * Standard course module settings
-         * -------------------------------------------------------------
-         */
         $this->standard_coursemodule_elements();
-
-        /*
-         * -------------------------------------------------------------
-         * Standard action buttons
-         * -------------------------------------------------------------
-         */
         $this->add_action_buttons();
     }
 
     /**
      * Custom validation for the form.
-     *
-     * We validate:
-     * - prompt text must not be empty
-     * - at least one zone must exist
-     * - at least one pair must exist
-     * - each pair line must contain exactly one pipe separator
      *
      * @param array $data Submitted form data
      * @param array $files Uploaded files
@@ -175,36 +148,24 @@ class mod_collabmatch_mod_form extends moodleform_mod {
     public function validation($data, $files) {
         $errors = parent::validation($data, $files);
 
-        /*
-         * Prompt text
-         */
-        if (trim($data['prompttext']) === '') {
-            $errors['prompttext'] = 'Please enter a prompt or instruction for learners.';
+        if (trim((string)$data['prompttext']) === '') {
+            $errors['prompttext'] = get_string('errorpromptrequired', 'mod_collabmatch');
         }
 
-        /*
-         * Target zones
-         */
-        $zonelines = preg_split('/\r\n|\r|\n/', $data['targetzones']);
+        $zonelines = preg_split('/\r\n|\r|\n/', (string)$data['targetzones']);
         $cleanzones = [];
-
         foreach ($zonelines as $line) {
             $line = trim($line);
             if ($line !== '') {
                 $cleanzones[] = $line;
             }
         }
-
         if (count($cleanzones) < 1) {
-            $errors['targetzones'] = 'Please enter at least one target zone.';
+            $errors['targetzones'] = get_string('errorzonecount', 'mod_collabmatch');
         }
 
-        /*
-         * Match pairs
-         */
-        $pairlines = preg_split('/\r\n|\r|\n/', $data['matchpairs']);
+        $pairlines = preg_split('/\r\n|\r|\n/', (string)$data['matchpairs']);
         $cleanpairs = [];
-
         foreach ($pairlines as $line) {
             $line = trim($line);
             if ($line !== '') {
@@ -213,21 +174,34 @@ class mod_collabmatch_mod_form extends moodleform_mod {
         }
 
         if (count($cleanpairs) < 1) {
-            $errors['matchpairs'] = 'Please enter at least one match pair.';
+            $errors['matchpairs'] = get_string('errorpaircount', 'mod_collabmatch');
         } else {
             foreach ($cleanpairs as $pairline) {
                 if (substr_count($pairline, '|') !== 1) {
-                    $errors['matchpairs'] = 'Each match pair must use exactly one pipe character, like this: Springbok|South Africa';
+                    $errors['matchpairs'] = get_string('errorpairformat', 'mod_collabmatch');
                     break;
                 }
 
-                list($item, $zone) = array_map('trim', explode('|', $pairline, 2));
-
+                [$item, $zone] = array_map('trim', explode('|', $pairline, 2));
                 if ($item === '' || $zone === '') {
-                    $errors['matchpairs'] = 'Each match pair must contain both an item and a correct zone.';
+                    $errors['matchpairs'] = get_string('errorpairemptyparts', 'mod_collabmatch');
                     break;
                 }
             }
+        }
+
+        if (!empty($data['timerenabled'])) {
+            $timeseconds = (int)($data['timeseconds'] ?? 0);
+            if ($timeseconds < 5) {
+                $errors['timeseconds'] = get_string('errortimesecondsmin', 'mod_collabmatch');
+            }
+            if ($timeseconds > 600) {
+                $errors['timeseconds'] = get_string('errortimesecondsmax', 'mod_collabmatch');
+            }
+        }
+
+        if (trim((string)($data['howitworkstext'] ?? '')) === '') {
+            $errors['howitworkstext'] = get_string('errorhowitworkstextrequired', 'mod_collabmatch');
         }
 
         return $errors;

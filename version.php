@@ -29,7 +29,7 @@ $plugin->component = 'mod_collabmatch';
 /*
  * Bump this so Moodle runs the upgrade step.
  */
-$plugin->version = 2026032401;
+$plugin->version =  2026041004;
 
 $plugin->requires = 2024042200;
 

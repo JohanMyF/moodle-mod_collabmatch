@@ -32,25 +32,10 @@ function xmldb_collabmatch_upgrade($oldversion) {
      * 2026031900
      *
      * Recovery / alignment step for experimental development versions.
-     *
-     * This step safely ensures that all required structures now exist:
-     * - collabmatch_game table
-     * - expected fields on collabmatch_game
-     * - teacher-defined fields on collabmatch
-     * - grade and passingpercentage on collabmatch
-     * - collabmatch_move table
-     *
-     * IMPORTANT:
-     * This is the version that should match the new version.php.
      * -----------------------------------------------------------------
      */
     if ($oldversion < 2026031900) {
 
-        /*
-         * ---------------------------------------------------------
-         * Ensure collabmatch_game exists
-         * ---------------------------------------------------------
-         */
         $table = new xmldb_table('collabmatch_game');
 
         if (!$dbman->table_exists($table)) {
@@ -99,25 +84,12 @@ function xmldb_collabmatch_upgrade($oldversion) {
             }
         }
 
-        /*
-         * ---------------------------------------------------------
-         * Ensure collabmatch has teacher-defined content fields
-         * ---------------------------------------------------------
-         */
         $table = new xmldb_table('collabmatch');
 
         $field = new xmldb_field('prompttext', XMLDB_TYPE_TEXT, null, null, null, null, null, 'introformat');
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
-
-        /*
-         * Historical field from an earlier design.
-         * Keep it if it already exists; do not add it anymore unless
-         * you still actively use it elsewhere.
-         *
-         * We deliberately do nothing here.
-         */
 
         $field = new xmldb_field('targetzones', XMLDB_TYPE_TEXT, null, null, null, null, null, 'prompttext');
         if (!$dbman->field_exists($table, $field)) {
@@ -139,11 +111,6 @@ function xmldb_collabmatch_upgrade($oldversion) {
             $dbman->add_field($table, $field);
         }
 
-        /*
-         * ---------------------------------------------------------
-         * Ensure collabmatch_move exists
-         * ---------------------------------------------------------
-         */
         $table = new xmldb_table('collabmatch_move');
 
         if (!$dbman->table_exists($table)) {
@@ -162,6 +129,47 @@ function xmldb_collabmatch_upgrade($oldversion) {
         }
 
         upgrade_mod_savepoint(true, 2026031900, 'collabmatch');
+    }
+
+    /*
+     * -----------------------------------------------------------------
+     * 2026041000
+     *
+     * Add timer and How it works configuration fields.
+     * -----------------------------------------------------------------
+     */
+    if ($oldversion < 2026041000) {
+        $table = new xmldb_table('collabmatch');
+
+        $field = new xmldb_field('timerenabled', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '1', 'passingpercentage');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('timeseconds', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '60', 'timerenabled');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('howitworkstext', XMLDB_TYPE_TEXT, null, null, null, null, null, 'timeseconds');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $defaulttext = 'You have {seconds} seconds to choose your question and your answer. Choose the ones you know your opponent will find easy to do.';
+
+        $records = $DB->get_records('collabmatch', null, '', 'id, howitworkstext');
+        foreach ($records as $record) {
+            $updaterecord = new stdClass();
+            $updaterecord->id = $record->id;
+
+            if (!isset($record->howitworkstext) || trim((string)$record->howitworkstext) === '') {
+                $updaterecord->howitworkstext = $defaulttext;
+                $DB->update_record('collabmatch', $updaterecord);
+            }
+        }
+
+        upgrade_mod_savepoint(true, 2026041000, 'collabmatch');
     }
 
     return true;
