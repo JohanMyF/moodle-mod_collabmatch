@@ -1,0 +1,269 @@
+/* This file is part of Moodle - http://moodle.org/
+ *
+ * Moodle is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Moodle is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/**
+ * Styles for the CollabMatch activity.
+ *
+ * @package    mod_collabmatch
+ * @copyright  2026 Johan Venter <johan@myfutureway.co.za>
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+.collabmatch-min {
+    max-width: 980px;
+    margin: 0 auto;
+    overflow: hidden;
+}
+
+.collabmatch-topbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 14px;
+}
+
+.collabmatch-help-btn {
+    border: 1px solid #cfe0ff;
+    background: #edf4ff;
+    color: #1d4ed8;
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.collabmatch-how-panel {
+    display: none;
+    background: #fff;
+    border: 1px solid #d9e2f2;
+    border-radius: 16px;
+    padding: 16px 18px;
+    margin-bottom: 18px;
+    box-shadow: 0 12px 32px rgba(29, 78, 216, 0.08);
+}
+
+.collabmatch-how-panel.is-open {
+    display: block;
+}
+
+.collabmatch-turn-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    background: #e8f5e9;
+    border: 1px solid #b7ddb9;
+    border-radius: 16px;
+    padding: 16px 18px;
+    margin-bottom: 18px;
+}
+
+.collabmatch-turn-banner h3 {
+    margin: 0 0 4px;
+    font-size: 24px;
+    color: #1b5e20;
+}
+
+.collabmatch-turn-banner p {
+    margin: 0;
+    color: #2f5d33;
+}
+
+.collabmatch-timer {
+    width: 70px;
+    height: 70px;
+    border-radius: 999px;
+    border: 4px solid #8bcf91;
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    background: #fff;
+    color: #1b5e20;
+    font-size: 20px;
+    line-height: 1;
+}
+
+.collabmatch-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) 320px;
+    gap: 18px;
+}
+
+.collabmatch-col {
+    display: grid;
+    gap: 18px;
+}
+
+.collabmatch-card {
+    background: #fff;
+    border: 1px solid #d9e2f2;
+    border-radius: 20px;
+    padding: 18px;
+    box-shadow: 0 12px 32px rgba(29, 78, 216, 0.08);
+}
+
+.collabmatch-card h3 {
+    margin: 0 0 10px;
+    font-size: 26px;
+}
+
+.collabmatch-card p {
+    margin: 0 0 14px;
+    color: #5e6b7a;
+    line-height: 1.5;
+}
+
+.collabmatch-form-stack {
+    display: grid;
+    gap: 16px;
+}
+
+.collabmatch-field label {
+    display: block;
+    font-weight: 800;
+    margin-bottom: 8px;
+}
+
+.collabmatch-field-hint {
+    margin-top: 8px;
+    color: #5e6b7a;
+    font-size: 13px;
+}
+
+.collabmatch-select {
+    width: 100%;
+    max-width: 100%;
+}
+
+.collabmatch-submit-btn,
+.collabmatch-full-btn {
+    width: 100%;
+}
+
+.collabmatch-score-strip {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.collabmatch-score-strip.collabmatch-score-strip-solo {
+    grid-template-columns: 1fr;
+}
+
+.collabmatch-score-box {
+    border-radius: 16px;
+    padding: 14px;
+    text-align: center;
+    border: 1px solid #cfe0ff;
+    background: #eef4ff;
+}
+
+.collabmatch-score-box-partner {
+    background: #f4efff;
+    border-color: #dfd0ff;
+}
+
+.collabmatch-score-label {
+    font-size: 13px;
+    color: #5e6b7a;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.collabmatch-score-name {
+    font-weight: 800;
+    margin-bottom: 4px;
+}
+
+.collabmatch-score-value {
+    font-size: 34px;
+    font-weight: 900;
+    color: #1d4ed8;
+    line-height: 1;
+}
+
+.collabmatch-score-versus {
+    font-weight: 900;
+    color: #5e6b7a;
+}
+
+.collabmatch-subheading {
+    margin: 0 0 10px;
+    font-size: 18px;
+}
+
+.collabmatch-move-list {
+    display: grid;
+    gap: 10px;
+}
+
+.collabmatch-move-row {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 12px;
+    align-items: center;
+    padding: 12px 10px;
+    border-radius: 12px;
+    background: #f8fafc;
+    border: 1px solid #e5edf7;
+}
+
+.collabmatch-move-dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    font-size: 12px;
+    font-weight: 900;
+    color: #fff;
+    background: #2e7d32;
+}
+
+.collabmatch-action-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 12px;
+}
+
+.collabmatch-action-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #eef3fa;
+}
+
+.collabmatch-empty-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+}
+
+@media (max-width: 900px) {
+    .collabmatch-grid,
+    .collabmatch-empty-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .collabmatch-score-strip {
+        grid-template-columns: 1fr auto 1fr;
+    }
+}
