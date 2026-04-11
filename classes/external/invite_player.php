@@ -1,4 +1,27 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * External service: invite another learner to a game.
+ *
+ * @package    mod_collabmatch
+ * @copyright  2026 Johan Venter
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
 namespace mod_collabmatch\external;
 
 defined('MOODLE_INTERNAL') || die();
@@ -17,9 +40,11 @@ use moodle_exception;
 use stdClass;
 
 /**
- * External service: invite another learner to a game.
+ * Class invite_player
  *
- * @package    mod_collabmatch
+ * Handles inviting another learner to a game.
+ *
+ * @package mod_collabmatch
  */
 class invite_player extends external_api {
 
@@ -38,9 +63,9 @@ class invite_player extends external_api {
     /**
      * Send an invitation and create an invited game row.
      *
-     * @param int $cmid
-     * @param int $inviteeuserid
-     * @return array
+     * @param int $cmid Course module ID
+     * @param int $inviteeuserid User ID of invitee
+     * @return array Result data
      */
     public static function execute(int $cmid, int $inviteeuserid): array {
         global $DB, $USER;
@@ -138,7 +163,7 @@ class invite_player extends external_api {
         $message->userto = $invitee;
         $message->subject = get_string('invitesubject', 'mod_collabmatch', format_string($collabmatch->name));
         $message->fullmessage =
-            fullname($USER) . " " .
+            fullname($USER) . ' ' .
             get_string('invitefullmessage', 'mod_collabmatch') . "\n\n" .
             $joinurl->out(false);
         $message->fullmessageformat = FORMAT_PLAIN;

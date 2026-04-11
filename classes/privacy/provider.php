@@ -25,7 +25,7 @@
  *
  * @package    mod_collabmatch
  * @category   privacy
- * @copyright  2026
+ * @copyright  2026 Johan Venter
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 

@@ -5,12 +5,20 @@
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Scheduled task to clean up stale Collabmatch games.
+ * Scheduled task to clean up stale CollabMatch games.
  *
  * @package    mod_collabmatch
- * @copyright  2026
+ * @copyright  2026 Johan Venter
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -21,6 +29,8 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot . '/mod/collabmatch/lib.php');
 
 /**
+ * Class cleanup_stale_games
+ *
  * Scheduled cleanup of stale games.
  *
  * This first version is intentionally conservative.
@@ -32,16 +42,18 @@ require_once($CFG->dirroot . '/mod/collabmatch/lib.php');
  *
  * The actual deletion is delegated to collabmatch_delete_game()
  * in lib.php so that one shared deletion path is used.
+ *
+ * @package mod_collabmatch
  */
 class cleanup_stale_games extends \core\task\scheduled_task {
 
     /**
-     * Human-readable task name shown in Moodle scheduled tasks UI.
+     * Human-readable task name shown in the Moodle scheduled tasks UI.
      *
      * @return string
      */
-    public function get_name() {
-        return 'Cleanup stale Collabmatch games';
+    public function get_name(): string {
+        return get_string('cleanupstalegamestask', 'mod_collabmatch');
     }
 
     /**
@@ -49,7 +61,7 @@ class cleanup_stale_games extends \core\task\scheduled_task {
      *
      * @return void
      */
-    public function execute() {
+    public function execute(): void {
         global $DB;
 
         $now = time();

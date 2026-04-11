@@ -1,4 +1,27 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * External service: expire the current learner turn when time runs out.
+ *
+ * @package    mod_collabmatch
+ * @copyright  2026 Johan Venter
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
 namespace mod_collabmatch\external;
 
 defined('MOODLE_INTERNAL') || die();
@@ -13,9 +36,11 @@ use external_single_structure;
 use external_value;
 
 /**
- * External service: expire the current learner turn when time runs out.
+ * Class expire_turn
  *
- * @package    mod_collabmatch
+ * Handles automatic expiry of a learner's turn.
+ *
+ * @package mod_collabmatch
  */
 class expire_turn extends external_api {
 
@@ -33,17 +58,8 @@ class expire_turn extends external_api {
     /**
      * Expire the current learner turn.
      *
-     * Rule:
-     * - no point awarded
-     * - turn passes to the other learner
-     * - a timeout message is recorded as the last move
-     *
-     * This method is intentionally tolerant:
-     * if the turn has already changed, it returns a harmless response
-     * instead of throwing an exception.
-     *
-     * @param int $cmid
-     * @return array
+     * @param int $cmid Course module ID
+     * @return array Result data
      */
     public static function execute(int $cmid): array {
         global $DB, $USER;
@@ -74,25 +90,23 @@ class expire_turn extends external_api {
 
         $game = $games ? reset($games) : false;
 
-        // Quietly ignore stale calls when no active game exists.
         if (!$game) {
             return [
                 'success' => false,
                 'gameid' => 0,
                 'status' => 'finished',
                 'currentturn' => 0,
-                'message' => 'No active game found.',
+                'message' => get_string('noactivegamefound', 'mod_collabmatch'),
             ];
         }
 
-        // Quietly ignore stale calls when the turn already moved on.
         if ((int)$game->currentturn !== (int)$USER->id) {
             return [
                 'success' => false,
                 'gameid' => (int)$game->id,
                 'status' => (string)$game->status,
                 'currentturn' => (int)$game->currentturn,
-                'message' => 'Turn already changed.',
+                'message' => get_string('turnalreadychanged', 'mod_collabmatch'),
             ];
         }
 
@@ -104,7 +118,6 @@ class expire_turn extends external_api {
         $game->lastplayer = (int)$USER->id;
         $game->lastmovetime = time();
 
-        // Multiplayer: pass turn to the other learner.
         if (!empty($game->playerb)) {
             if ((int)$USER->id === (int)$game->playera) {
                 $game->currentturn = (int)$game->playerb;
@@ -112,21 +125,17 @@ class expire_turn extends external_api {
                 $game->currentturn = (int)$game->playera;
             }
         } else {
-            // Single-player mode: keep the turn on the same learner.
             $game->currentturn = (int)$USER->id;
         }
 
         $game->timemodified = time();
         $DB->update_record('collabmatch_game', $game);
 
-        // Grades do not change, but keep grade state in sync.
         collabmatch_update_grades($collabmatch, $USER->id);
+
         if (!empty($game->playerb)) {
-            if ((int)$USER->id === (int)$game->playera) {
-                collabmatch_update_grades($collabmatch, $game->playerb);
-            } else {
-                collabmatch_update_grades($collabmatch, $game->playera);
-            }
+            $other = ((int)$USER->id === (int)$game->playera) ? $game->playerb : $game->playera;
+            collabmatch_update_grades($collabmatch, $other);
         }
 
         $transaction->allow_commit();

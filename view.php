@@ -18,9 +18,10 @@
  * Main view page for the CollabMatch activity.
  *
  * @package    mod_collabmatch
- * @copyright  2026
+ * @copyright  2026 Johan Venter <johan@myfutureway.co.za>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
 require_once(__DIR__ . '/../../config.php');
 require_once($CFG->dirroot . '/mod/collabmatch/lib.php');
 require_once($CFG->libdir . '/completionlib.php');
@@ -41,7 +42,6 @@ $PAGE->set_context($context);
 $PAGE->set_title(format_string($collabmatch->name));
 $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_pagelayout('incourse');
-$PAGE->requires->css('/mod/collabmatch/styles.css');
 
 $event = \mod_collabmatch\event\course_module_viewed::create([
     'objectid' => $collabmatch->id,
@@ -56,6 +56,7 @@ $completion = new completion_info($course);
 $completion->set_module_viewed($cm);
 
 $currentuserid = (int)$USER->id;
+
 /**
  * Parse line-based textarea content into trimmed rows.
  *
@@ -274,7 +275,11 @@ if (!$currentgame) {
     echo $renderer->render_empty_state($availableusers);
     echo html_writer::end_div();
 
-    $PAGE->requires->js_call_amd('mod_collabmatch/help_panel', 'init', ['collabmatch-help-btn', 'collabmatch-how-panel', 5000]);
+    $PAGE->requires->js_call_amd('mod_collabmatch/help_panel', 'init', [
+        'collabmatch-help-btn',
+        'collabmatch-how-panel',
+        5000,
+    ]);
     $PAGE->requires->js_call_amd('mod_collabmatch/poller', 'init', [$cm->id]);
     $PAGE->requires->js_call_amd('mod_collabmatch/invite_sender', 'init', [$cm->id]);
     $PAGE->requires->js_call_amd('mod_collabmatch/join_handler', 'init', [$cm->id]);
@@ -321,7 +326,11 @@ echo html_writer::end_div();
 echo html_writer::end_div();
 echo html_writer::end_div();
 
-$PAGE->requires->js_call_amd('mod_collabmatch/help_panel', 'init', ['collabmatch-help-btn', 'collabmatch-how-panel', 5000]);
+$PAGE->requires->js_call_amd('mod_collabmatch/help_panel', 'init', [
+    'collabmatch-help-btn',
+    'collabmatch-how-panel',
+    5000,
+]);
 
 if ($currentgame->status === 'active' && $myturn) {
     $PAGE->requires->js_call_amd('mod_collabmatch/timer_circle', 'init', [

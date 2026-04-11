@@ -15,12 +15,10 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Capability definitions for the collabmatch activity module.
- *
- * Capabilities tell Moodle who is allowed to do what.
+ * Capability definitions for the CollabMatch activity module.
  *
  * @package    mod_collabmatch
- * @copyright  2026
+ * @copyright  2026 Johan Venter <johan@myfutureway.co.za>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -28,10 +26,8 @@ defined('MOODLE_INTERNAL') || die();
 
 $capabilities = [
 
-    /*
-     * Who is allowed to add this activity to a course?
-     *
-     * Typically teachers, course creators, and managers.
+    /**
+     * Add a new CollabMatch instance.
      */
     'mod/collabmatch:addinstance' => [
         'riskbitmask' => RISK_XSS,
@@ -47,10 +43,8 @@ $capabilities = [
         'clonepermissionsfrom' => 'moodle/course:manageactivities',
     ],
 
-    /*
-     * Who is allowed to view the activity?
-     *
-     * Both teachers and students should be able to open it.
+    /**
+     * View the CollabMatch activity.
      */
     'mod/collabmatch:view' => [
         'captype' => 'read',
@@ -64,12 +58,12 @@ $capabilities = [
         ],
     ],
 
-    /*
-     * Who is allowed to play / take a turn / submit a move?
-     *
-     * This is the learner interaction capability.
+    /**
+     * Play the game (submit moves, join games, take turns).
      */
     'mod/collabmatch:play' => [
+        'riskbitmask' => RISK_SPAM,
+
         'captype' => 'write',
         'contextlevel' => CONTEXT_MODULE,
 
@@ -81,13 +75,12 @@ $capabilities = [
         ],
     ],
 
-    /*
-     * Who is allowed to manage or review game instances?
-     *
-     * This will be useful later for teacher oversight,
-     * reset options, diagnostics, and reporting.
+    /**
+     * Manage games (reset, override, inspect).
      */
     'mod/collabmatch:manage' => [
+        'riskbitmask' => RISK_DATALOSS,
+
         'captype' => 'write',
         'contextlevel' => CONTEXT_MODULE,
 

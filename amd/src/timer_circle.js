@@ -1,49 +1,88 @@
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * Handles the turn timer for CollabMatch.
+ *
+ * @module     mod_collabmatch/timer_circle
+ * @copyright  2026 Johan Venter <johan@myfutureway.co.za>
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
-    return {
-        init: function(timerId, cmid) {
-            var timer = document.getElementById(timerId);
-            var expired = false;
-            var seconds = 0;
-            var intervalId = null;
+    'use strict';
 
-            if (!timer) {
+    /**
+     * Initialise the turn timer.
+     *
+     * @param {string} timerId
+     * @param {number} cmid
+     */
+    function init(timerId, cmid) {
+        var timer = document.getElementById(timerId);
+        var expired = false;
+        var seconds = 0;
+        var intervalId = null;
+
+        if (!timer) {
+            return;
+        }
+
+        seconds = parseInt(timer.getAttribute('data-seconds'), 10);
+        if (isNaN(seconds) || seconds < 1) {
+            return;
+        }
+
+        /**
+         * Render the remaining time.
+         *
+         * @param {number} value
+         */
+        function render(value) {
+            timer.textContent = value;
+        }
+
+        /**
+         * Stop the timer interval.
+         */
+        function stopTimer() {
+            if (intervalId !== null) {
+                window.clearInterval(intervalId);
+                intervalId = null;
+            }
+        }
+
+        /**
+         * Expire the current turn once time runs out.
+         */
+        function expireTurn() {
+            if (expired) {
                 return;
             }
 
-            seconds = parseInt(timer.getAttribute('data-seconds'), 10);
-            if (!seconds || seconds < 1) {
-                return;
-            }
+            expired = true;
+            stopTimer();
 
-            function render(value) {
-                timer.textContent = value;
-            }
-
-            function stopTimer() {
-                if (intervalId) {
-                    window.clearInterval(intervalId);
-                    intervalId = null;
+            Ajax.call([{
+                methodname: 'mod_collabmatch_expire_turn',
+                args: {
+                    cmid: cmid
                 }
-            }
-
-            function expireTurn() {
-                if (expired) {
-                    return;
-                }
-
-                expired = true;
-                stopTimer();
-
-                Ajax.call([{
-                    methodname: 'mod_collabmatch_expire_turn',
-                    args: {
-                        cmid: cmid
-                    }
-                }])[0]
+            }])[0]
                 .then(function(response) {
                     if (response && response.success) {
                         window.location.reload();
-                        return;
                     }
 
                     // Quiet failure: another browser may already have advanced the turn.
@@ -62,25 +101,28 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
 
                     Notification.exception(error);
                 });
+        }
+
+        render(seconds);
+
+        intervalId = window.setInterval(function() {
+            if (expired) {
+                stopTimer();
+                return;
             }
 
-            render(seconds);
+            if (seconds > 0) {
+                seconds -= 1;
+                render(seconds);
+            }
 
-            intervalId = window.setInterval(function() {
-                if (expired) {
-                    stopTimer();
-                    return;
-                }
+            if (seconds <= 0) {
+                expireTurn();
+            }
+        }, 1000);
+    }
 
-                if (seconds > 0) {
-                    seconds--;
-                    render(seconds);
-                }
-
-                if (seconds <= 0) {
-                    expireTurn();
-                }
-            }, 1000);
-        }
+    return {
+        init: init
     };
 });

@@ -1,45 +1,81 @@
-define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-    return {
+/**
+ * Handles starting a single-player game in CollabMatch.
+ *
+ * @module     mod_collabmatch/start_single_player
+ * @copyright  2026 Johan Venter <johan@myfutureway.co.za>
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+define(['core/ajax', 'core/notification', 'core/str'], function(Ajax, Notification, Str) {
+    'use strict';
 
-        init: function(cmid) {
-            var buttons = document.querySelectorAll('[data-start-single-player]');
+    /**
+     * Initialise single-player start handling.
+     *
+     * @param {number} cmid
+     */
+    function init(cmid) {
+        var buttons = document.querySelectorAll('[data-start-single-player]');
 
-            if (!buttons.length) {
-                return;
-            }
+        if (!buttons.length) {
+            return;
+        }
 
-            buttons.forEach(function(button) {
-                button.addEventListener('click', function(e) {
-                    e.preventDefault();
+        buttons.forEach(function(button) {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
 
-                    button.disabled = true;
+                if (button.disabled) {
+                    return;
+                }
 
-                    Ajax.call([{
-                        methodname: 'mod_collabmatch_start_single_player',
-                        args: {
-                            cmid: cmid
-                        }
-                    }])[0]
-                    .done(function(response) {
+                button.disabled = true;
+
+                Ajax.call([{
+                    methodname: 'mod_collabmatch_start_single_player',
+                    args: {
+                        cmid: cmid
+                    }
+                }])[0]
+                    .then(function(response) {
                         if (response && response.success) {
                             window.location.reload();
                             return;
                         }
 
                         button.disabled = false;
-                        Notification.alert(
-                            'CollabMatch',
-                            'The single-player game could not be started.',
-                            'OK'
-                        );
+
+                        return Promise.all([
+                            Str.get_string('pluginname', 'mod_collabmatch'),
+                            Str.get_string('jssingleplayerstartfailed', 'mod_collabmatch'),
+                            Str.get_string('ok', 'moodle')
+                        ]).then(function(strings) {
+                            Notification.alert(strings[0], strings[1], strings[2]);
+                        });
                     })
-                    .fail(function(error) {
+                    .catch(function(error) {
                         button.disabled = false;
                         Notification.exception(error);
                     });
-                });
             });
-        }
+        });
+    }
+
+    return {
+        init: init
     };
 });

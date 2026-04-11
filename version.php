@@ -15,10 +15,10 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Version information for the collabmatch activity module.
+ * Version information for the CollabMatch activity module.
  *
  * @package    mod_collabmatch
- * @copyright  2026
+ * @copyright  2026 Johan Venter <johan@myfutureway.co.za>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -26,11 +26,15 @@ defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'mod_collabmatch';
 
-/*
- * Bump this so Moodle runs the upgrade step.
+/**
+ * Plugin version (Date: YYYYMMDDXX).
+ * Bump this to trigger Moodle upgrade steps.
  */
-$plugin->version =  2026041004;
+$plugin->version = 2026041004;
 
+/**
+ * Minimum Moodle version required.
+ */
 $plugin->requires = 2024042200;
 
 $plugin->maturity = MATURITY_ALPHA;

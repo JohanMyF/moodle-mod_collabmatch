@@ -1,46 +1,77 @@
-define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-    return {
+/**
+ * Handles move submission for CollabMatch gameplay.
+ *
+ * @module     mod_collabmatch/move_submitter
+ * @copyright  2026 Johan Venter <johan@myfutureway.co.za>
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+define(['core/ajax', 'core/notification', 'core/str'], function(Ajax, Notification, Str) {
+    'use strict';
 
-        init: function(cmid, formid) {
-            var form = document.getElementById(formid);
+    /**
+     * Initialise move submission handling.
+     *
+     * @param {number} cmid
+     * @param {string} formid
+     */
+    function init(cmid, formid) {
+        var form = document.getElementById(formid);
 
-            if (!form) {
+        if (!form) {
+            return;
+        }
+
+        var submitButton = form.querySelector('button[type="submit"], input[type="submit"]');
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            var itemField = form.querySelector('[name="item"]');
+            var zoneField = form.querySelector('[name="zone"]');
+
+            var item = itemField ? String(itemField.value || '').trim() : '';
+            var zone = zoneField ? String(zoneField.value || '').trim() : '';
+
+            if (!item || !zone) {
+                Notification.alert(
+                    'CollabMatch',
+                    Str.get_string('jsitemzonebothrequired', 'mod_collabmatch'),
+                    Str.get_string('ok', 'moodle')
+                );
                 return;
             }
 
-            var submitButton = form.querySelector('button[type="submit"], input[type="submit"]');
+            if (submitButton && submitButton.disabled) {
+                return;
+            }
 
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
+            if (submitButton) {
+                submitButton.disabled = true;
+            }
 
-                var itemField = form.querySelector('[name="item"]');
-                var zoneField = form.querySelector('[name="zone"]');
-
-                var item = itemField ? String(itemField.value || '').trim() : '';
-                var zone = zoneField ? String(zoneField.value || '').trim() : '';
-
-                if (!item || !zone) {
-                    Notification.alert(
-                        'CollabMatch',
-                        'Please choose both an item and a zone.',
-                        'OK'
-                    );
-                    return;
+            Ajax.call([{
+                methodname: 'mod_collabmatch_submit_move',
+                args: {
+                    cmid: cmid,
+                    item: item,
+                    zone: zone
                 }
-
-                if (submitButton) {
-                    submitButton.disabled = true;
-                }
-
-                Ajax.call([{
-                    methodname: 'mod_collabmatch_submit_move',
-                    args: {
-                        cmid: cmid,
-                        item: item,
-                        zone: zone
-                    }
-                }])[0]
+            }])[0]
                 .then(function(response) {
                     if (response && response.success) {
                         window.location.reload();
@@ -51,11 +82,13 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
                         submitButton.disabled = false;
                     }
 
-                    Notification.alert(
-                        'CollabMatch',
-                        'The move could not be submitted.',
-                        'OK'
-                    );
+                    return Promise.all([
+                        Str.get_string('pluginname', 'mod_collabmatch'),
+                        Str.get_string('jsmovesubmitfailed', 'mod_collabmatch'),
+                        Str.get_string('ok', 'moodle')
+                    ]).then(function(strings) {
+                        Notification.alert(strings[0], strings[1], strings[2]);
+                    });
                 })
                 .catch(function(error) {
                     if (submitButton) {
@@ -63,7 +96,10 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
                     }
                     Notification.exception(error);
                 });
-            });
-        }
+        });
+    }
+
+    return {
+        init: init
     };
 });

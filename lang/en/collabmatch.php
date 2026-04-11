@@ -194,3 +194,20 @@ $string['privacy:you'] = 'You';
 $string['privacy:collabmatchdata'] = 'CollabMatch data';
 
 $string['messageprovider:gameinvite'] = 'Game invitation';
+
+$string['jsinvaliduserselected'] = 'Invalid user selected.';
+$string['jssending'] = 'Sending...';
+$string['jsinvitationnotsent'] = 'Invitation could not be sent.';
+
+$string['jsinvalidgameselected'] = 'Invalid game selected.';
+$string['jsgamenotjoined'] = 'The game could not be joined.';
+
+$string['jsitemzonebothrequired'] = 'Please choose both an item and a zone.';
+$string['jsmovesubmitfailed'] = 'The move could not be submitted.';
+
+$string['jssingleplayerstartfailed'] = 'The single-player game could not be started.';
+
+$string['noactivegamefound'] = 'No active game found.';
+$string['turnalreadychanged'] = 'Turn already changed.';
+
+$string['cleanupstalegamestask'] = 'Cleanup stale CollabMatch games';

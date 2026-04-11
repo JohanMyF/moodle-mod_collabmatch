@@ -18,18 +18,16 @@
  * Renderer for the CollabMatch activity.
  *
  * @package    mod_collabmatch
- * @copyright  2026
+ * @copyright  2026 Johan Venter <johan@myfutureway.co.za>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-
-
-
-
 /**
  * Main renderer for CollabMatch.
+ *
+ * @package    mod_collabmatch
  */
 class mod_collabmatch_renderer extends plugin_renderer_base {
 
