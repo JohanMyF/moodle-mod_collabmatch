@@ -1,5 +1,5 @@
 <?php
-// This file is part of Moodle - http://moodle.org/
+// This file is part of Moodle - https://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -21,11 +21,6 @@
  * @copyright  2026 Johan Venter <johan@myfutureway.co.za>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-
-
-
-
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -115,13 +110,13 @@ function collabmatch_update_instance($data, $mform) {
 
 /**
  * ============================================
- * 🔥 NEW: DELETE A SINGLE GAME SAFELY
+ * DELETE A SINGLE GAME SAFELY
  * ============================================
  *
- * This is now the SINGLE SOURCE OF TRUTH
+ * This is the single source of truth
  * for deleting a game and its related data.
  *
- * Parent → Child → Grandchild logic:
+ * Parent → Child logic:
  *   Game → Moves
  *
  * @param int $gameid
@@ -130,10 +125,10 @@ function collabmatch_update_instance($data, $mform) {
 function collabmatch_delete_game($gameid) {
     global $DB;
 
-    // First delete all moves for this game
+    // First delete all moves for this game.
     $DB->delete_records('collabmatch_move', ['gameid' => $gameid]);
 
-    // Then delete the game itself
+    // Then delete the game itself.
     $DB->delete_records('collabmatch_game', ['id' => $gameid]);
 }
 
@@ -149,18 +144,18 @@ function collabmatch_delete_instance($id) {
         return false;
     }
 
-    // 🔁 Get all games for this activity
+    // Get all games for this activity.
     $games = $DB->get_records('collabmatch_game', ['collabmatchid' => $collabmatch->id], '', 'id');
 
-    // 🔁 Delete each game using the shared function
+    // Delete each game using the shared function.
     foreach ($games as $game) {
         collabmatch_delete_game($game->id);
     }
 
-    // Delete main activity record
+    // Delete main activity record.
     $DB->delete_records('collabmatch', ['id' => $collabmatch->id]);
 
-    // Clean up gradebook
+    // Clean up gradebook.
     collabmatch_grade_item_delete($collabmatch);
 
     return true;
@@ -168,7 +163,7 @@ function collabmatch_delete_instance($id) {
 
 /**
  * ============================================
- * GRADE FUNCTIONS (UNCHANGED)
+ * GRADE FUNCTIONS
  * ============================================
  */
 function collabmatch_grade_item_update($collabmatch, $grades = null) {
@@ -197,6 +192,12 @@ function collabmatch_grade_item_update($collabmatch, $grades = null) {
     );
 }
 
+/**
+ * Delete the CollabMatch grade item.
+ *
+ * @param stdClass $collabmatch Activity record.
+ * @return int
+ */
 function collabmatch_grade_item_delete($collabmatch) {
     return grade_update(
         'mod/collabmatch',
@@ -211,11 +212,11 @@ function collabmatch_grade_item_delete($collabmatch) {
 }
 
 /**
- * ============================================
- * REMAINING FUNCTIONS UNCHANGED
- * ============================================
+ * Count valid match pairs configured for an activity.
+ *
+ * @param stdClass $collabmatch Activity record.
+ * @return int
  */
-
 function collabmatch_count_total_pairs($collabmatch) {
     if (empty($collabmatch->matchpairs)) {
         return 0;
@@ -243,6 +244,13 @@ function collabmatch_count_total_pairs($collabmatch) {
     return $count;
 }
 
+/**
+ * Calculate the user's best percentage across finished games.
+ *
+ * @param stdClass $collabmatch Activity record.
+ * @param int $userid User ID.
+ * @return float|null
+ */
 function collabmatch_calculate_user_percentage($collabmatch, $userid) {
     global $DB;
 
@@ -263,18 +271,32 @@ function collabmatch_calculate_user_percentage($collabmatch, $userid) {
         return null;
     }
 
-    $bestpercentage = null;
+    $gameids = array_keys($games);
+    list($insql, $params) = $DB->get_in_or_equal($gameids, SQL_PARAMS_QM);
 
-    foreach ($games as $game) {
-        $correctcount = $DB->count_records('collabmatch_move', [
-            'gameid' => $game->id,
-            'userid' => $userid,
-            'correct' => 1,
-        ]);
+    $sql = "SELECT gameid, COUNT(1) AS correctcount
+              FROM {collabmatch_move}
+             WHERE gameid $insql
+               AND userid = ?
+               AND correct = ?
+          GROUP BY gameid";
+    $params[] = $userid;
+    $params[] = 1;
 
+    $counts = $DB->get_records_sql($sql, $params);
+    $countbygameid = [];
+
+    foreach ($counts as $countrecord) {
+        $countbygameid[(int)$countrecord->gameid] = (int)$countrecord->correctcount;
+    }
+
+    $bestpercentage = 0.0;
+
+    foreach ($gameids as $gameid) {
+        $correctcount = $countbygameid[$gameid] ?? 0;
         $percentage = ($correctcount / $totalpairs) * 100;
 
-        if ($bestpercentage === null || $percentage > $bestpercentage) {
+        if ($percentage > $bestpercentage) {
             $bestpercentage = $percentage;
         }
     }
@@ -282,6 +304,13 @@ function collabmatch_calculate_user_percentage($collabmatch, $userid) {
     return $bestpercentage;
 }
 
+/**
+ * Update grades for one user or all users in the activity.
+ *
+ * @param stdClass $collabmatch Activity record.
+ * @param int $userid Optional user ID.
+ * @return void
+ */
 function collabmatch_update_grades($collabmatch, $userid = 0) {
     global $DB;
 
@@ -302,31 +331,78 @@ function collabmatch_update_grades($collabmatch, $userid = 0) {
         return;
     }
 
-    $games = $DB->get_records('collabmatch_game', ['collabmatchid' => $collabmatch->id, 'status' => 'finished'], '', 'playera, playerb');
+    $games = $DB->get_records(
+        'collabmatch_game',
+        ['collabmatchid' => $collabmatch->id, 'status' => 'finished'],
+        '',
+        'id, playera, playerb'
+    );
 
     if (!$games) {
         collabmatch_grade_item_update($collabmatch, null);
         return;
     }
 
+    $totalpairs = collabmatch_count_total_pairs($collabmatch);
+    if ($totalpairs <= 0) {
+        collabmatch_grade_item_update($collabmatch, null);
+        return;
+    }
+
     $userids = [];
+    $bestpercentages = [];
+    $gameids = [];
+
     foreach ($games as $game) {
+        $gameids[] = (int)$game->id;
+
         if (!empty($game->playera)) {
-            $userids[$game->playera] = $game->playera;
+            $userids[(int)$game->playera] = (int)$game->playera;
+            if (!array_key_exists((int)$game->playera, $bestpercentages)) {
+                $bestpercentages[(int)$game->playera] = 0.0;
+            }
         }
+
         if (!empty($game->playerb)) {
-            $userids[$game->playerb] = $game->playerb;
+            $userids[(int)$game->playerb] = (int)$game->playerb;
+            if (!array_key_exists((int)$game->playerb, $bestpercentages)) {
+                $bestpercentages[(int)$game->playerb] = 0.0;
+            }
         }
     }
 
-    foreach ($userids as $uid) {
-        $percentage = collabmatch_calculate_user_percentage($collabmatch, $uid);
-        if ($percentage !== null) {
-            $grades[$uid] = (object)[
-                'userid' => $uid,
-                'rawgrade' => round(($percentage / 100) * $grademax, 2),
-            ];
+    if (!$userids || !$gameids) {
+        collabmatch_grade_item_update($collabmatch, null);
+        return;
+    }
+
+    list($gameinsql, $gameparams) = $DB->get_in_or_equal($gameids, SQL_PARAMS_QM);
+    list($userinsql, $userparams) = $DB->get_in_or_equal(array_values($userids), SQL_PARAMS_QM);
+
+    $sql = "SELECT userid, gameid, COUNT(1) AS correctcount
+              FROM {collabmatch_move}
+             WHERE gameid $gameinsql
+               AND userid $userinsql
+               AND correct = ?
+          GROUP BY userid, gameid";
+
+    $params = array_merge($gameparams, $userparams, [1]);
+    $counts = $DB->get_records_sql($sql, $params);
+
+    foreach ($counts as $countrecord) {
+        $percentage = ((int)$countrecord->correctcount / $totalpairs) * 100;
+        $countuserid = (int)$countrecord->userid;
+
+        if ($percentage > $bestpercentages[$countuserid]) {
+            $bestpercentages[$countuserid] = $percentage;
         }
+    }
+
+    foreach ($bestpercentages as $uid => $percentage) {
+        $grades[$uid] = (object)[
+            'userid' => $uid,
+            'rawgrade' => round(($percentage / 100) * $grademax, 2),
+        ];
     }
 
     collabmatch_grade_item_update($collabmatch, $grades ? $grades : null);
