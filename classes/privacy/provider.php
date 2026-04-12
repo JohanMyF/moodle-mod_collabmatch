@@ -1,5 +1,5 @@
 <?php
-// This file is part of Moodle - http://moodle.org/
+// This file is part of Moodle - https://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -147,32 +147,91 @@ class provider implements metadata_provider, request_provider {
 
         $userid = $contextlist->get_user()->id;
 
+        $modulecontexts = [];
+        $instanceids = [];
         foreach ($contextlist->get_contexts() as $context) {
             if (!$context instanceof context_module) {
                 continue;
             }
 
-            $cm = get_coursemodule_from_id('collabmatch', $context->instanceid, 0, false, MUST_EXIST);
-            $collabmatch = $DB->get_record('collabmatch', ['id' => $cm->instance], '*', MUST_EXIST);
+            $modulecontexts[(int)$context->instanceid] = $context;
+            $instanceids[] = (int)$context->instanceid;
+        }
 
-            $games = $DB->get_records_select(
-                'collabmatch_game',
-                'collabmatchid = ? AND (playera = ? OR playerb = ? OR currentturn = ? OR lastplayer = ?)',
-                [$collabmatch->id, $userid, $userid, $userid, $userid],
-                'id ASC'
-            );
+        if (!$instanceids) {
+            return;
+        }
 
-            $movesql = "SELECT mv.*, g.collabmatchid
-                          FROM {collabmatch_move} mv
-                          JOIN {collabmatch_game} g
-                            ON g.id = mv.gameid
-                         WHERE g.collabmatchid = ?
-                           AND mv.userid = ?
-                      ORDER BY mv.id ASC";
-            $moves = $DB->get_records_sql($movesql, [$collabmatch->id, $userid]);
+        list($cminsql, $cmparams) = $DB->get_in_or_equal($instanceids, SQL_PARAMS_QM);
+
+        $cms = $DB->get_records_select(
+            'course_modules',
+            "id $cminsql",
+            $cmparams,
+            '',
+            'id, instance'
+        );
+
+        if (!$cms) {
+            return;
+        }
+
+        $collabmatchids = [];
+        foreach ($cms as $cm) {
+            $collabmatchids[(int)$cm->instance] = (int)$cm->instance;
+        }
+
+        list($collabinsql, $collabparams) = $DB->get_in_or_equal(array_values($collabmatchids), SQL_PARAMS_QM);
+
+        $collabmatches = $DB->get_records_select(
+            'collabmatch',
+            "id $collabinsql",
+            $collabparams
+        );
+
+        $gamesql = "SELECT *
+                      FROM {collabmatch_game}
+                     WHERE collabmatchid $collabinsql
+                       AND (playera = ? OR playerb = ? OR currentturn = ? OR lastplayer = ?)
+                  ORDER BY id ASC";
+        $gameparams = array_merge($collabparams, [$userid, $userid, $userid, $userid]);
+        $games = $DB->get_records_sql($gamesql, $gameparams);
+
+        $movesql = "SELECT mv.*, g.collabmatchid
+                      FROM {collabmatch_move} mv
+                      JOIN {collabmatch_game} g
+                        ON g.id = mv.gameid
+                     WHERE g.collabmatchid $collabinsql
+                       AND mv.userid = ?
+                  ORDER BY mv.id ASC";
+        $moveparams = array_merge($collabparams, [$userid]);
+        $moves = $DB->get_records_sql($movesql, $moveparams);
+
+        $gamesbyactivity = [];
+        foreach ($games as $game) {
+            $gamesbyactivity[(int)$game->collabmatchid][] = $game;
+        }
+
+        $movesbyactivity = [];
+        foreach ($moves as $move) {
+            $movesbyactivity[(int)$move->collabmatchid][] = $move;
+        }
+
+        foreach ($cms as $cm) {
+            $cmid = (int)$cm->id;
+            $collabmatchid = (int)$cm->instance;
+
+            if (!isset($modulecontexts[$cmid]) || !isset($collabmatches[$collabmatchid])) {
+                continue;
+            }
+
+            $context = $modulecontexts[$cmid];
+            $collabmatch = $collabmatches[$collabmatchid];
+            $activitygames = $gamesbyactivity[$collabmatchid] ?? [];
+            $activitymoves = $movesbyactivity[$collabmatchid] ?? [];
 
             $exportgames = [];
-            foreach ($games as $game) {
+            foreach ($activitygames as $game) {
                 $exportgames[] = (object) [
                     'id' => $game->id,
                     'playera' => ($game->playera == $userid) ? get_string('privacy:you', 'mod_collabmatch') : $game->playera,
@@ -188,7 +247,7 @@ class provider implements metadata_provider, request_provider {
             }
 
             $exportmoves = [];
-            foreach ($moves as $move) {
+            foreach ($activitymoves as $move) {
                 $exportmoves[] = (object) [
                     'id' => $move->id,
                     'gameid' => $move->gameid,
@@ -220,8 +279,6 @@ class provider implements metadata_provider, request_provider {
      * @throws dml_exception
      */
     public static function delete_data_for_user(approved_contextlist $contextlist): void {
-        global $DB;
-
         $userid = $contextlist->get_user()->id;
 
         foreach ($contextlist->get_contexts() as $context) {
@@ -376,3 +433,4 @@ class provider implements metadata_provider, request_provider {
         }
     }
 }
+
