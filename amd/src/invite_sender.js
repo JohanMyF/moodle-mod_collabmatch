@@ -1,4 +1,4 @@
-// This file is part of Moodle - http://moodle.org/
+// This file is part of Moodle - https://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -26,32 +26,16 @@ define(['core/ajax', 'core/notification', 'core/str'], function(Ajax, Notificati
     /**
      * Initialise invitation handling.
      *
-     * @param {number} cmid
+     * @param {number} cmid Course module ID.
      */
     function init(cmid) {
-        var strings = {
-            title: 'CollabMatch',
-            invaliduser: 'Invalid user selected.',
-            sending: 'Sending...',
-            invitationnotsent: 'Invitation could not be sent.',
-            ok: 'OK'
-        };
-
-        Str.get_strings([
+        var stringpromise = Str.get_strings([
             {key: 'pluginname', component: 'mod_collabmatch'},
             {key: 'jsinvaliduserselected', component: 'mod_collabmatch'},
             {key: 'jssending', component: 'mod_collabmatch'},
             {key: 'jsinvitationnotsent', component: 'mod_collabmatch'},
             {key: 'ok', component: 'moodle'}
-        ]).then(function(results) {
-            strings.title = results[0];
-            strings.invaliduser = results[1];
-            strings.sending = results[2];
-            strings.invitationnotsent = results[3];
-            strings.ok = results[4];
-        }).catch(function() {
-            // Keep safe fallback strings.
-        });
+        ]);
 
         document.addEventListener('click', function(e) {
             var button = e.target.closest('[data-invite-userid]');
@@ -62,43 +46,55 @@ define(['core/ajax', 'core/notification', 'core/str'], function(Ajax, Notificati
 
             e.preventDefault();
 
-            var inviteeuserid = parseInt(button.getAttribute('data-invite-userid'), 10);
+            stringpromise.then(function(results) {
+                var strings = {
+                    title: results[0],
+                    invaliduser: results[1],
+                    sending: results[2],
+                    invitationnotsent: results[3],
+                    ok: results[4]
+                };
 
-            if (!inviteeuserid) {
-                Notification.alert(strings.title, strings.invaliduser, strings.ok);
-                return;
-            }
+                var inviteeuserid = parseInt(button.getAttribute('data-invite-userid'), 10);
 
-            if (button.disabled) {
-                return;
-            }
-
-            button.disabled = true;
-            var originalText = button.textContent;
-            button.textContent = strings.sending;
-
-            Ajax.call([{
-                methodname: 'mod_collabmatch_invite_player',
-                args: {
-                    cmid: cmid,
-                    inviteeuserid: inviteeuserid
+                if (!inviteeuserid) {
+                    Notification.alert(strings.title, strings.invaliduser, strings.ok);
+                    return;
                 }
-            }])[0]
-                .then(function(response) {
-                    if (response && response.success) {
-                        window.location.reload();
-                        return;
-                    }
 
-                    button.disabled = false;
-                    button.textContent = originalText;
-                    Notification.alert(strings.title, strings.invitationnotsent, strings.ok);
-                })
-                .catch(function(error) {
-                    button.disabled = false;
-                    button.textContent = originalText;
-                    Notification.exception(error);
-                });
+                if (button.disabled) {
+                    return;
+                }
+
+                button.disabled = true;
+                var originalText = button.textContent;
+                button.textContent = strings.sending;
+
+                Ajax.call([{
+                    methodname: 'mod_collabmatch_invite_player',
+                    args: {
+                        cmid: cmid,
+                        inviteeuserid: inviteeuserid
+                    }
+                }])[0]
+                    .then(function(response) {
+                        if (response && response.success) {
+                            window.location.reload();
+                            return;
+                        }
+
+                        button.disabled = false;
+                        button.textContent = originalText;
+                        Notification.alert(strings.title, strings.invitationnotsent, strings.ok);
+                    })
+                    .catch(function(error) {
+                        button.disabled = false;
+                        button.textContent = originalText;
+                        Notification.exception(error);
+                    });
+            }).catch(function(error) {
+                Notification.exception(error);
+            });
         });
     }
 
