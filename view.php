@@ -1,5 +1,5 @@
 <?php
-// This file is part of Moodle - http://moodle.org/
+// This file is part of Moodle - https://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -131,7 +131,7 @@ $usergames = $DB->get_records_select(
 );
 
 foreach ($usergames as $candidate) {
-    if (in_array($candidate->status, ['active', 'waiting', 'invited'], true)) {
+    if (in_array($candidate->status, ['active', 'waiting', 'invited', 'finished'], true)) {
         $currentgame = $candidate;
         break;
     }
@@ -175,8 +175,31 @@ if ($currentgame) {
 }
 
 $availableusers = [];
-if (!$currentgame) {
+if (!$currentgame || $currentgame->status === 'finished') {
     $cutoff = time() - 180;
+
+    // Only block users who are already tied up with the current user.
+    $busygames = $DB->get_records_select(
+        'collabmatch_game',
+        'collabmatchid = ? AND status IN (?, ?, ?)',
+        [$collabmatch->id, 'active', 'invited', 'waiting'],
+        '',
+        'playera, playerb'
+    );
+
+    $busyuserids = [];
+    foreach ($busygames as $busygame) {
+        $playera = (int)$busygame->playera;
+        $playerb = (int)$busygame->playerb;
+
+        if ($playera === $currentuserid && $playerb > 0) {
+            $busyuserids[$playerb] = true;
+        }
+
+        if ($playerb === $currentuserid && $playera > 0) {
+            $busyuserids[$playera] = true;
+        }
+    }
 
     $onlineusers = $DB->get_records_sql(
         "SELECT u.*
@@ -191,24 +214,6 @@ if (!$currentgame) {
        ORDER BY ula.timeaccess DESC, u.lastname ASC, u.firstname ASC",
         [$course->id, $cutoff, $currentuserid]
     );
-
-    $busygames = $DB->get_records_select(
-        'collabmatch_game',
-        'collabmatchid = ? AND status IN (?, ?, ?)',
-        [$collabmatch->id, 'active', 'invited', 'waiting'],
-        '',
-        'playera, playerb'
-    );
-
-    $busyuserids = [];
-    foreach ($busygames as $busygame) {
-        if (!empty($busygame->playera)) {
-            $busyuserids[(int)$busygame->playera] = true;
-        }
-        if (!empty($busygame->playerb)) {
-            $busyuserids[(int)$busygame->playerb] = true;
-        }
-    }
 
     foreach ($onlineusers as $onlineuser) {
         if (!isset($busyuserids[(int)$onlineuser->id])) {
@@ -239,7 +244,8 @@ if ($allmoves) {
 
 if ($useridstoload) {
     [$insql, $params] = $DB->get_in_or_equal(array_values($useridstoload), SQL_PARAMS_QM);
-    $usersbyid = $DB->get_records_select('user', "id $insql", $params);
+    $userfields = 'id, firstname, lastname, firstnamephonetic, lastnamephonetic, middlename, alternatename';
+    $usersbyid = $DB->get_records_select('user', "id $insql", $params, '', $userfields);
 }
 
 $playeraname = get_string('unknownuser');
@@ -266,6 +272,56 @@ $renderer = $PAGE->get_renderer('mod_collabmatch');
 
 echo html_writer::start_div('collabmatch-min');
 echo $renderer->render_help_panel($howitworkstext);
+
+$totalpairs = collabmatch_count_total_pairs($collabmatch);
+
+if ($currentgame && $currentgame->status === 'finished') {
+    $issologame = empty($currentgame->playerb);
+    $youname = (int)$currentgame->playera === $currentuserid ? $playeraname : $playerbname;
+    $youscore = (int)$currentgame->playera === $currentuserid ? $playerascore : $playerbscore;
+    $partnername = (int)$currentgame->playera === $currentuserid ? $playerbname : $playeraname;
+    $partnerscore = (int)$currentgame->playera === $currentuserid ? $playerbscore : $playerascore;
+
+    echo $renderer->render_finished_state(
+        $issologame,
+        $youname,
+        $youscore,
+        $partnername,
+        $partnerscore,
+        $totalpairs
+    );
+
+    echo html_writer::start_div('', [
+        'id' => 'collabmatch-delayed-options',
+        'style' => 'display:none;',
+    ]);
+    echo $renderer->render_empty_state($availableusers);
+    echo html_writer::end_div();
+
+    $PAGE->requires->js_init_code("
+        window.setTimeout(function() {
+            var el = document.getElementById('collabmatch-delayed-options');
+            if (el) {
+                el.style.display = 'block';
+            }
+        }, 5000);
+    ");
+
+    echo html_writer::end_div();
+
+    $PAGE->requires->js_call_amd('mod_collabmatch/help_panel', 'init', [
+        'collabmatch-help-btn',
+        'collabmatch-how-panel',
+        5000,
+    ]);
+    $PAGE->requires->js_call_amd('mod_collabmatch/poller', 'init', [$cm->id]);
+    $PAGE->requires->js_call_amd('mod_collabmatch/invite_sender', 'init', [$cm->id]);
+    $PAGE->requires->js_call_amd('mod_collabmatch/join_handler', 'init', [$cm->id]);
+    $PAGE->requires->js_call_amd('mod_collabmatch/start_single_player', 'init', [$cm->id]);
+
+    echo $OUTPUT->footer();
+    exit;
+}
 
 if ($currentgame && $currentgame->status === 'active') {
     echo $renderer->render_turn_banner($myturn, $timerenabled, $timeseconds);
