@@ -83,8 +83,8 @@ function xmldb_collabmatch_upgrade($oldversion) {
 
         $defaulttext = get_string('default_howitworks', 'mod_collabmatch');
 
-        $records = $DB->get_records('collabmatch', null, '', 'id, howitworkstext');
-        foreach ($records as $record) {
+        $recordset = $DB->get_recordset('collabmatch', null, '', 'id, howitworkstext');
+        foreach ($recordset as $record) {
             if (!isset($record->howitworkstext) || trim((string)$record->howitworkstext) === '') {
                 $updaterecord = new stdClass();
                 $updaterecord->id = $record->id;
@@ -92,6 +92,7 @@ function xmldb_collabmatch_upgrade($oldversion) {
                 $DB->update_record('collabmatch', $updaterecord);
             }
         }
+        $recordset->close();
 
         upgrade_mod_savepoint(true, 2026041000, 'collabmatch');
     }
