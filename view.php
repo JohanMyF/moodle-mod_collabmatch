@@ -223,23 +223,24 @@ if (!$currentgame || $currentgame->status === 'finished') {
 }
 
 $usersbyid = [];
-$useridstoload = [];
-
-if ($currentgame) {
-    if (!empty($currentgame->playera)) {
-        $useridstoload[(int)$currentgame->playera] = (int)$currentgame->playera;
-    }
-    if (!empty($currentgame->playerb)) {
-        $useridstoload[(int)$currentgame->playerb] = (int)$currentgame->playerb;
-    }
-}
-
 $recentmoves = $allmoves ? array_slice(array_reverse(array_values($allmoves)), 0, 4) : [];
 
-if ($useridstoload) {
-    [$insql, $params] = $DB->get_in_or_equal(array_values($useridstoload), SQL_PARAMS_QM);
+if ($currentgame) {
     $userfields = 'id, firstname, lastname, firstnamephonetic, lastnamephonetic, middlename, alternatename';
-    $usersbyid = $DB->get_records_select('user', "id $insql", $params, '', $userfields);
+
+    if (!empty($currentgame->playera)) {
+        $playerauser = $DB->get_record('user', ['id' => (int)$currentgame->playera], $userfields);
+        if ($playerauser) {
+            $usersbyid[(int)$currentgame->playera] = $playerauser;
+        }
+    }
+
+    if (!empty($currentgame->playerb) && (int)$currentgame->playerb !== (int)$currentgame->playera) {
+        $playerbuser = $DB->get_record('user', ['id' => (int)$currentgame->playerb], $userfields);
+        if ($playerbuser) {
+            $usersbyid[(int)$currentgame->playerb] = $playerbuser;
+        }
+    }
 }
 
 $playeraname = get_string('unknownuser');
