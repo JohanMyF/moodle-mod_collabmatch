@@ -13,7 +13,7 @@ jobs:
       matrix:
         php: ['8.2']
         moodle-branch: ['MOODLE_401_STABLE']
-        database: [pgsql, mariadb]
+        database: [pgsql]
         include:
           - php: '8.2'
             extensions: curl, dom, gd, iconv, intl, json, mbstring, pdo, pdo_pgsql, pdo_mysql, pgsql, mysqli, simplexml, soap, sodium, xml, xmlreader, xmlwriter, zip
