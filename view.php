@@ -234,8 +234,9 @@ if ($currentgame) {
     }
 }
 
-if ($allmoves) {
-    foreach ($allmoves as $move) {
+$recentmoves = $allmoves ? array_slice(array_reverse(array_values($allmoves)), 0, 4) : [];
+if ($recentmoves) {
+    foreach ($recentmoves as $move) {
         if (!empty($move->userid)) {
             $useridstoload[(int)$move->userid] = (int)$move->userid;
         }
@@ -298,14 +299,10 @@ if ($currentgame && $currentgame->status === 'finished') {
     echo $renderer->render_empty_state($availableusers);
     echo html_writer::end_div();
 
-    $PAGE->requires->js_init_code("
-        window.setTimeout(function() {
-            var el = document.getElementById('collabmatch-delayed-options');
-            if (el) {
-                el.style.display = 'block';
-            }
-        }, 5000);
-    ");
+    $PAGE->requires->js_call_amd('mod_collabmatch/delayed_reveal', 'init', [
+        'collabmatch-delayed-options',
+        5000,
+    ]);
 
     echo html_writer::end_div();
 
@@ -366,7 +363,6 @@ $youname = (int)$currentgame->playera === $currentuserid ? $playeraname : $playe
 $youscore = (int)$currentgame->playera === $currentuserid ? $playerascore : $playerbscore;
 $partnername = (int)$currentgame->playera === $currentuserid ? $playerbname : $playeraname;
 $partnerscore = (int)$currentgame->playera === $currentuserid ? $playerbscore : $playerascore;
-$recentmoves = $allmoves ? array_slice(array_reverse(array_values($allmoves)), 0, 4) : [];
 
 echo $renderer->render_game_progress(
     $issologame,
