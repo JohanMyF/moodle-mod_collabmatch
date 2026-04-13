@@ -151,6 +151,58 @@ class mod_collabmatch_renderer extends plugin_renderer_base {
 
         return $output;
     }
+    /**
+     * Render the finished-game summary panel.
+     *
+     * @param bool $issologame
+     * @param string $youname
+     * @param int $youscore
+     * @param string $partnername
+     * @param int $partnerscore
+     * @param int $totalpairs
+     * @return string
+     */
+    public function render_finished_state(
+        bool $issologame,
+        string $youname,
+        int $youscore,
+        string $partnername,
+        int $partnerscore,
+        int $totalpairs
+    ): string {
+        $content = '';
+
+        if ($issologame) {
+            $message = get_string('finishedstatesolo', 'mod_collabmatch', [
+                'score' => $youscore,
+                'total' => $totalpairs,
+            ]);
+
+            $content .= html_writer::tag('p', $message, ['class' => 'collabmatch-finished-message']);
+        } else {
+            if ($youscore > $partnerscore) {
+                $resulttext = get_string('finishedstatewon', 'mod_collabmatch');
+            } else if ($youscore < $partnerscore) {
+                $resulttext = get_string('finishedstatelost', 'mod_collabmatch');
+            } else {
+                $resulttext = get_string('finishedstatedraw', 'mod_collabmatch');
+            }
+
+            $message = get_string('finishedstatemulti', 'mod_collabmatch', [
+                'youname' => $youname,
+                'youscore' => $youscore,
+                'partnername' => $partnername,
+                'partnerscore' => $partnerscore,
+                'result' => $resulttext,
+            ]);
+
+            $content .= html_writer::tag('p', $message, ['class' => 'collabmatch-finished-message']);
+        }
+
+        return html_writer::tag('div', $content, ['class' => 'collabmatch-finished-panel']);
+    }
+
+
 
     /**
      * Render the invited-state card.
