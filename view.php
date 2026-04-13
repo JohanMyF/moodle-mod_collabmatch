@@ -235,13 +235,6 @@ if ($currentgame) {
 }
 
 $recentmoves = $allmoves ? array_slice(array_reverse(array_values($allmoves)), 0, 4) : [];
-if ($recentmoves) {
-    foreach ($recentmoves as $move) {
-        if (!empty($move->userid)) {
-            $useridstoload[(int)$move->userid] = (int)$move->userid;
-        }
-    }
-}
 
 if ($useridstoload) {
     [$insql, $params] = $DB->get_in_or_equal(array_values($useridstoload), SQL_PARAMS_QM);
