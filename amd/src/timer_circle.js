@@ -64,6 +64,31 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
         }
 
         /**
+         * Determine whether the current game is single-player.
+         *
+         * @returns {boolean}
+         */
+        function isSinglePlayerMode() {
+            return !!document.querySelector('.collabmatch-score-strip-solo');
+        }
+
+        /**
+         * Auto-submit the currently selected move in single-player mode.
+         */
+        function submitSinglePlayerMove() {
+            var form = document.getElementById('collabmatch-move-form');
+
+            if (!form) {
+                return;
+            }
+
+            form.dispatchEvent(new Event('submit', {
+                bubbles: true,
+                cancelable: true
+            }));
+        }
+
+        /**
          * Expire the current turn once time runs out.
          */
         function expireTurn() {
@@ -73,6 +98,11 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
 
             expired = true;
             stopTimer();
+
+            if (isSinglePlayerMode()) {
+                submitSinglePlayerMove();
+                return;
+            }
 
             Ajax.call([{
                 methodname: 'mod_collabmatch_expire_turn',
